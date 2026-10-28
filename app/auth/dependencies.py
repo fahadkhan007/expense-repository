@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -27,8 +29,10 @@ async def get_current_user(token: str = Depends(oauth2_scheme))->dict:
         
         if not isinstance(user_id, str) or not user_id:
             raise creds_exception
+
+        user_id = UUID(user_id)
         
-    except PyJWTError:
+    except (PyJWTError, ValueError):
         raise creds_exception
     
     
@@ -43,9 +47,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme))->dict:
     if user_document is None:
         raise creds_exception
     
-    return {
-        **user_document,
-        "id": user_document["_id"]
-    }
+    return user_document
         
         

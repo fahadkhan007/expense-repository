@@ -1,8 +1,9 @@
 from datetime import datetime
 from typing import Annotated
-from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, StringConstraints
+
+from app.models.base import Base
 
 userName = Annotated[str, StringConstraints(min_length=3, max_length=50, strip_whitespace=True)]
 
@@ -21,8 +22,7 @@ class UserLogin(BaseModel):
     password: str
 
 
-class UserResponse(BaseModel):
-    id: UUID
+class UserResponse(Base):
     name: str
     email: EmailStr
     created_at: datetime

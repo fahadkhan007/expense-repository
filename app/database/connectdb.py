@@ -2,7 +2,10 @@ from pymongo import AsyncMongoClient
 
 from app.config.settings import settings
 
-client: AsyncMongoClient = AsyncMongoClient(settings.MONGODB_URI)
+client: AsyncMongoClient = AsyncMongoClient(
+    settings.MONGODB_URI,
+    uuidRepresentation="standard",
+)
 
 
 db = client[settings.DATABASE_NAME]

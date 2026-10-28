@@ -1,8 +1,10 @@
 from datetime import UTC, datetime, timedelta
+from uuid import UUID
 
 import jwt
-from app.config.settings import settings
 from pwdlib import PasswordHash
+
+from app.config.settings import settings
 
 password_hash = PasswordHash.recommended()
 
@@ -15,11 +17,11 @@ def verify_password(password:str, hashed_password:str)->bool:
     return password_hash.verify(password, hashed_password)
 
 
-def create_access_token(user_id: str)->str:
+def create_access_token(user_id: UUID)->str:
     expire = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     
     payload = {
-        "sub": user_id,
+        "sub": str(user_id),
         "exp": expire
     }
     

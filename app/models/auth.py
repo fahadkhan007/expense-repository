@@ -1,6 +1,7 @@
+from pydantic import BaseModel
+
 from app.models.users import UserResponse
 
-from pydantic import BaseModel
 
 class AuthResponse(BaseModel):
     user: UserResponse

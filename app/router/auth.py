@@ -31,7 +31,7 @@ async def register_user(user: UserCreate):
         hashed_password = await run_in_threadpool(hash_password, user.password)
     
         user_document = {
-            "_id": str(uuid4()),
+            "_id": uuid4(),
             **user.model_dump(exclude={"password"}),
             "password_hash": hashed_password,
             "created_at": datetime.now(UTC)
@@ -41,13 +41,8 @@ async def register_user(user: UserCreate):
         
         access_token = await run_in_threadpool(create_access_token, user_document["_id"])
         
-        user_data={
-            **user_document,
-            "id": user_document["_id"]
-        }
-        
         return AuthResponse(
-            user=UserResponse.model_validate(user_data),
+            user=UserResponse.model_validate(user_document),
             access_token=access_token,
             token_type="bearer"
         )
@@ -92,13 +87,8 @@ async def login_user(user: UserLogin):
             
         access_token = await run_in_threadpool(create_access_token, user_document["_id"])
         
-        user_data={
-            **user_document,
-            "id": user_document["_id"]
-        }
-        
         return AuthResponse(
-            user=UserResponse.model_validate(user_data),
+            user=UserResponse.model_validate(user_document),
             access_token=access_token,
             token_type="bearer"
         )
@@ -116,8 +106,9 @@ async def login_user(user: UserLogin):
         
   
 
+# This is just for the scalar api doc token generation
 @router.post("/token")
-async def issue_token(form: OAuth2PasswordRequestForm = Depends()):
+async def issue_token(form: OAuth2PasswordRequestForm = Depends()):  # noqa: B008
     # Scalar sends the email in the standard OAuth2 "username" field.
     user_document = await db.users.find_one({"email": form.username})
 
@@ -147,7 +138,7 @@ async def issue_token(form: OAuth2PasswordRequestForm = Depends()):
 
       
 @router.get("/me", response_model=UserResponse)
-async def get_user(user: UserResponse = Depends(get_current_user)):
+async def get_user(user: UserResponse = Depends(get_current_user)):  # noqa: B008
     return user
         
         
