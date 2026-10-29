@@ -13,6 +13,11 @@ class CategoryCreate(BaseModel):
     icon: str
     color: str
 
+class CategoryUpdate(BaseModel):
+    name: catName | None = None
+    type: Literal["debit", "credit"] | None = None
+    icon: str | None = None
+    color: str | None = None
 
 class CategoryResponse(Base):
     user_id: UUID

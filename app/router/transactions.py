@@ -7,7 +7,11 @@ from pymongo.errors import PyMongoError  # type: ignore
 
 from app.auth.dependencies import get_current_user
 from app.database.connectdb import db
-from app.models.transactions import TransactionCreate, TransactionResponse
+from app.models.transactions import (
+    TransactionCreate,
+    TransactionResponse,
+    TransactionUpdate,
+)
 
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 
@@ -86,7 +90,7 @@ async def get_transaction(
     try:
         transaction = await db.transactions.find_one({
             "_id": transaction_id,
-            "user_id": user["id"],
+            "user_id": user["_id"],
         })
 
         if transaction is None:
@@ -103,7 +107,97 @@ async def get_transaction(
             detail="Database error.",
         )
 
+
+@router.patch("/{transaction_id}", response_model=TransactionResponse, status_code=status.HTTP_200_OK)
+async def update_transaction(
+    transaction_id: UUID,
+    data: TransactionUpdate,
+    user: Annotated[dict, Depends(get_current_user)]):
+
+    try:
+        transaction = await db.transactions.find_one({
+            "_id": transaction_id,
+            "user_id": user["_id"],
+        })
+
+        if transaction is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Transaction not found.",
+            )
+
+        if data.category_id is not None:
+            category=await db.categories.find_one({
+                "_id":data.category_id,
+                "user_id":user["_id"]
+            })
+
+            if category is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="category not found!"
+                )
+            
+            # Use the new type if provided, otherwise fall back to the existing transaction type
+            effective_type = data.type if data.type is not None else transaction["type"]
+            if category["type"] is not None and category["type"] != effective_type:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="category type does not match transaction type!"
+                )
         
+        update_data=data.model_dump(exclude_unset=True)
+
+        if not update_data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No update data provided.",
+            )
         
+        await db.transactions.update_one({
+            "_id": transaction_id,
+            "user_id": user["_id"],
+        },{
+            "$set": update_data
+        })
         
-        
+        updated_transaction = await db.transactions.find_one({
+            "_id": transaction_id,
+            "user_id": user["_id"],
+        })
+
+        return TransactionResponse.model_validate(updated_transaction)
+
+    except PyMongoError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error.",
+        )
+    
+    except HTTPException:
+        raise
+    
+
+
+@router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_transaction(transaction_id: UUID, user: Annotated[dict, Depends(get_current_user)]):
+    try:
+        result = await db.transactions.delete_one({
+            "_id": transaction_id,
+            "user_id": user["_id"],
+        })
+
+        if result.deleted_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Transaction not found.",
+            )
+    except HTTPException:
+        raise
+
+    except PyMongoError:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error.",
+        )
+

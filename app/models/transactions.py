@@ -14,8 +14,13 @@ class TransactionCreate(BaseModel):
     description: str | None = Field(default=None, max_length=300)
 
 
+class TransactionUpdate(BaseModel):
+    type: Literal["debit", "credit"] | None = None
+    amount: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    category_id: UUID | None = None
+    description: str | None = Field(default=None, max_length=300)
+
 class TransactionResponse(Base):
-    
     user_id: UUID
     type: Literal["debit", "credit"]
     amount: float
