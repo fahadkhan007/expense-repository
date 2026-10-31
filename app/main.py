@@ -6,8 +6,10 @@ from scalar_fastapi import get_scalar_api_reference
 from app.database.connectdb import close_db, connect_db
 from app.database.init_db import init_db
 from app.router.auth import router as auth_router
+from app.router.budgets import router as budget_router
 from app.router.categories import router as categories_router
 from app.router.transactions import router as transaction_router
+from app.router.reports import router as reports_router
 
 
 @asynccontextmanager # type: ignore
@@ -32,6 +34,8 @@ app=FastAPI(
 app.include_router(auth_router)
 app.include_router(categories_router)
 app.include_router(transaction_router)
+app.include_router(budget_router)
+app.include_router(reports_router)
 
 
 
